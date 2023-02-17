@@ -62,7 +62,7 @@ export default function Sidebar() {
         <ListItem key={item.title} disablePadding>
           <ListItemButton
             onClick={() => navigate(item.path)}
-            selected={!!(item.path && location.pathname == item.path)}
+            selected={!!(item.path && location.pathname === item.path)}
             disabled={item.disabled}
           >
             <ListItemIcon>{item.icon}</ListItemIcon>
