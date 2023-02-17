@@ -81,8 +81,8 @@ export class Storage {
       const vaults = this.getVaultIds();
       const id = getVaultId(vault);
       if (!vaults.includes(id)) {
-        const newVaults = [...vaults];
-        newVaults.push(id);
+        let newVaults = [...vaults];
+        newVaults = [id].concat(newVaults);
         this.set<Array<string>>(VAULTS_KEY, newVaults);
       }
 

@@ -38,8 +38,6 @@ export function submitExtrinsic(
 ): void {
   extrinsic
     .signAndSend(account, { signer }, (result: ISubmittableResultWithBlockNumber) => {
-      console.log('signAndSend:result:toHuman', result, result.toHuman(true));
-
       if (result.isError) {
         onError(null, result);
       } else if (result.status.isBroadcast) {

@@ -8,6 +8,7 @@ import ComingSoon from './components/status/ComingSoon';
 import SwitchVault from './components/vault/SwitchVault';
 import VaultSettings from './components/vault/VaultSettings';
 import ImportVault from './components/vault/ImportVault';
+import EditVault from './components/vault/EditVault';
 
 export const router = createHashRouter([
   {
@@ -31,6 +32,10 @@ export const router = createHashRouter([
         path: ':vaultId/',
         element: <SwitchVault />,
         children: [
+          {
+            path: 'edit',
+            element: <EditVault />,
+          },
           {
             path: 'assets',
             element: <ComingSoon />,

@@ -1,15 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { encodeAddress } from '@polkadot/util-crypto';
 
 import Steps, { StepInput } from '../core/Steps';
 import SetName from './core/SetName';
 import SetPolicies from './core/SetPolicies';
 import Summary from './core/Summary';
-import Status, { StatusOption, StatusStepInput } from './core/Status';
+import Status, { StatusOption } from './core/Status';
 import {
   Account,
   ChainInfo,
-  ISubmittableResultWithBlockNumber,
   ProxyAction,
   ProxyActionType,
   TransactionType,
@@ -17,9 +15,7 @@ import {
 } from '../../utils/types';
 import {
   getChainVault,
-  initVault,
-  isValidCreationVault,
-  makeProxyCreationActionsSignerAware,
+  isValidEditAndImportVault, makeProxyUpdateActionsStateAware,
   parseProxyActions,
 } from '../../utils/vault';
 import useChain from '../../hooks/useChain';
@@ -31,41 +27,30 @@ import { SubmittableExtrinsic } from '@polkadot/api/promise/types';
 import { submitExtrinsic } from '../../services/api';
 import { Signer } from '@polkadot/api/types';
 import { ApiPromise } from '@polkadot/api';
-import storage from '../../services/storage';
 import { UserContextType } from '../../context/types';
 import { useNavigate } from 'react-router-dom';
-import useUnsetVault from '../../hooks/useUnsetVault';
+import useVault from '../../hooks/useVault';
+import storage from "../../services/storage";
 
 const VaultSteps = Steps<Vault, UserContextType>;
 
 const FORM_STEPS: Array<StepInput> = [
   { title: 'Name your vault', content: SetName },
   { title: 'Approval policies', content: SetPolicies },
-  { title: 'Review and confirm', content: Summary, props: { title: "You're about to create a new Vault" } },
+  { title: 'Review and confirm', content: Summary, props: { title: "You're about to edit your Vault" } },
 ];
 
-const STATUS_STEPS: Array<StatusStepInput> = [
-  {
-    title: 'Create Vault',
-  },
-  {
-    title: 'Configure approval policies',
-  },
-];
-
-export default function CreateVault() {
+export default function EditVault() {
   const chain = useChain();
   const account = useAccount();
+  const vault = useVault();
   const accounts = useAccounts();
   const { api, apiSupported } = useApi();
   const signer = useSigner();
   const navigate = useNavigate();
-  useUnsetVault();
 
-  const [data, setData] = useState<Vault | null | undefined>(initVault(chain, account));
+  const [data, setData] = useState<Vault | null | undefined>(vault);
   const [status, setStatus] = useState<StatusOption>(StatusOption.initiating);
-  const [transactionSteps, setTransactionSteps] = useState<Array<StatusStepInput>>([]);
-  const [activeTransactionStep, setActiveTransactionStep] = useState<number>(0);
   const [canRetry, setCanRetry] = useState<boolean>(false);
 
   const cleanedVault = useMemo(() => {
@@ -90,14 +75,14 @@ export default function CreateVault() {
   }, [status]);
 
   const successContent = useMemo(() => {
-    return <Status status={status} steps={transactionSteps} activeStep={activeTransactionStep} />;
-  }, [status, transactionSteps, activeTransactionStep]);
+    return <Status status={status} />;
+  }, [status]);
 
   const onStepChange = (step: number) => {
     const isOnSubmissionStep = step >= FORM_STEPS.length;
     if (isOnSubmissionStep && data) {
       // All steps have been completed, we can create the vault
-      createVault(data);
+      updateVault(data);
     }
   };
 
@@ -112,11 +97,10 @@ export default function CreateVault() {
     chain: ChainInfo,
     account: Account,
     signer: Signer,
+    data: Vault,
   ): void => {
     if (proxyActions.length > 0) {
-      setActiveTransactionStep(1);
       setStatus(StatusOption.initiating);
-      setTransactionSteps(STATUS_STEPS);
 
       // Callbacks for creating approval policy
       const onBatchAllBroadCast = () => {
@@ -128,8 +112,9 @@ export default function CreateVault() {
       };
 
       const onBatchAllSuccess = () => {
-        setStatus(StatusOption.completed);
-        setActiveTransactionStep(2);
+        storage.saveVault(data);
+
+        setStatus(StatusOption.updated);
         setTimeout(() => {
           // Navigate to vault settings
           navigate(`/${chain?.info}:${pureProxyAddress}/settings`);
@@ -169,69 +154,43 @@ export default function CreateVault() {
     }
   };
 
-  const createVault = (data: Vault) => {
+  const updateVault = (data: Vault) => {
     setStatus(StatusOption.initiating);
-    setTransactionSteps([]);
-    setActiveTransactionStep(0);
 
-    if (isValidCreationVault(data) && chain && account?.address && api && apiSupported && signer) {
-      let proxyActions: Array<ProxyAction> = parseProxyActions(data, chain);
-      proxyActions = makeProxyCreationActionsSignerAware(proxyActions, account);
+    if (
+      isValidEditAndImportVault(data) &&
+      vault?.address &&
+      chain &&
+      account?.address &&
+      api &&
+      apiSupported &&
+      signer
+    ) {
+      const isSignerPartOfAnAnyPolicy =
+        vault.policies.filter(
+          (policy) =>
+            policy.type === TransactionType.any &&
+            policy.signatories
+              .map((signatory) => signatory?.address)
+              .filter(Boolean)
+              .includes(account.address),
+        ).length > 0;
+      if(isSignerPartOfAnAnyPolicy) {
+        let proxyActions: Array<ProxyAction> = parseProxyActions(data, chain);
+        proxyActions = makeProxyUpdateActionsStateAware(proxyActions, vault, chain);
 
-      const requiresTwoTransactions = proxyActions.length > 0;
-      if (requiresTwoTransactions) {
-        // User has to sign 2 transactions, update Status UI to indicate this
-        setTransactionSteps(STATUS_STEPS);
-      }
-
-      // Callbacks for creating pure proxy
-      const onPureProxyBroadCast = () => {
-        setStatus(StatusOption.processing);
-      };
-
-      const onPureProxyError = () => {
-        setStatus(StatusOption.failed);
-      };
-
-      const onPureProxySuccess = (result: ISubmittableResultWithBlockNumber) => {
-        const blockNumber = result.blockNumber?.toHex(),
-          blockHash = result.status.value.toHex();
-
-        const pureProxyRecord = result.findRecord('proxy', 'PureCreated');
-
-        if (pureProxyRecord) {
-          const pureProxyAddress = encodeAddress(pureProxyRecord.event.data[0].toHex(), chain?.prefix);
-
-          if (requiresTwoTransactions) {
-            // Initiate approval policy creation
-            createApprovalPolicy(api, pureProxyAddress, proxyActions, chain, account, signer);
-          } else {
-            setStatus(StatusOption.completed);
-          }
-
-          const newVault: Vault = {
-            ...data,
-            address: pureProxyAddress,
-            chain: (chain?.info || data?.chain) ?? '',
-            meta: {
-              blockNumber: blockNumber ?? '',
-              blockHash: blockHash ?? '',
-            },
-          };
-
-          storage.saveVault(newVault);
+        if(proxyActions.length > 0) {
+          createApprovalPolicy(api, vault.address, proxyActions, chain, account, signer, data);
         } else {
-          setStatus(StatusOption.failed);
+          setStatus(StatusOption.updated);
+          setTimeout(() => {
+            // Navigate to vault settings
+            navigate(`/${chain?.info}:${vault.address}/settings`);
+          }, 4000);
         }
-      };
-
-      // Extrinsic for creating pure proxy
-      const pureProxyTx: SubmittableExtrinsic = api.tx.proxy.createPure(TransactionType.any, 0, 0);
-      submitExtrinsic(pureProxyTx, account?.address ?? '', signer, {
-        onBroadcast: onPureProxyBroadCast,
-        onSuccess: onPureProxySuccess,
-        onError: onPureProxyError,
-      });
+      } else {
+        setStatus(StatusOption.denied);
+      }
     } else {
       setStatus(StatusOption.failed);
     }
@@ -239,12 +198,12 @@ export default function CreateVault() {
 
   return (
     <VaultSteps
-      title="Create new Vault"
+      title="Edit Vault"
       steps={FORM_STEPS}
       data={cleanedVault}
       props={contextProps}
       successContent={successContent}
-      successBtn="Create"
+      successBtn="Update"
       canRetry={canRetry}
       onStepChange={onStepChange}
       onDataChange={onDataChange}

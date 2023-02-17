@@ -1,17 +1,17 @@
-import { createKeyMulti, encodeAddress, isAddress, sortAddresses } from '@polkadot/util-crypto';
+import {createKeyMulti, encodeAddress, isAddress, sortAddresses} from '@polkadot/util-crypto';
 
 import {
   Account,
   AccountType,
-  Policy,
   ChainInfo,
+  Policy,
   ProxyAction,
   ProxyActionType,
   Signatory,
   TransactionType,
   Vault,
 } from './types';
-import { getChainAddress, getDisplayName } from './helpers';
+import {getChainAddress, getDisplayName} from './helpers';
 import _ from 'lodash';
 
 export function initVault(chain: ChainInfo, account?: Account | null, empty?: boolean): Vault {
@@ -195,6 +195,43 @@ export function makeProxyCreationActionsSignerAware(
   }
 
   return creationAwareProxyActions;
+}
+
+export function makeProxyUpdateActionsStateAware(proxyActions: Array<ProxyAction>, state: Vault, chain: ChainInfo): Array<ProxyAction> {
+  let stateAwareProxyActions = [...proxyActions];
+  const currentStateActions = parseProxyActions(state, chain);
+
+  const actionsToRemove: Array<ProxyAction> = [],
+    actionsToInsert: Array<ProxyAction> = [];
+
+  // Find "add" actions in current state that aren't in new actions and add remove actions for them and then remove add actions that are in both since they already exist
+  for(const action of currentStateActions) {
+    if(action.action === ProxyActionType.add) {
+      // We only care about matching additions
+      const isInNewState = proxyActions.find(item => item.action === action.action && item.proxyType === action.proxyType && item.account === action.account);
+      if(isInNewState) {
+        // add to list of actions to remove since it was already added
+        actionsToRemove.push(action);
+      } else {
+        // add a remove action since it has been removed
+        actionsToInsert.push({
+          ...action,
+          action: ProxyActionType.remove,
+        })
+      }
+    }
+  }
+
+  // Remove everything in actionsToRemove
+  stateAwareProxyActions = stateAwareProxyActions.filter(action => {
+    const isinActionsToRemove = actionsToRemove.find(item => item.action === action.action && item.proxyType === action.proxyType && item.account === action.account);
+    return !isinActionsToRemove;
+  });
+
+  // Insert everything in actionsToInsert
+  stateAwareProxyActions = stateAwareProxyActions.concat(actionsToInsert);
+
+  return stateAwareProxyActions;
 }
 
 export function getVaultPathUrl(vault: Vault, path = '/settings'): string {

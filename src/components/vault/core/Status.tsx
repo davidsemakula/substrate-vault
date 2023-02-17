@@ -7,10 +7,11 @@ import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
 import StepContent from '@mui/material/StepContent';
-
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import ErrorIcon from '@mui/icons-material/Error';
+import DoNotDisturbIcon from '@mui/icons-material/DoNotDisturb';
+
 import { generateId } from '../../../utils/helpers';
 
 export enum StatusOption {
@@ -18,7 +19,9 @@ export enum StatusOption {
   processing = 'processing',
   canceled = 'canceled',
   completed = 'completed',
+  updated = 'updated',
   failed = 'failed',
+  denied = 'denied',
 }
 
 export type StatusStepInput = {
@@ -62,10 +65,22 @@ export default function Status({ status = StatusOption.initiating, steps, active
       instruction = '';
       break;
     }
+    case StatusOption.updated: {
+      title = 'Your Vault was updated successfully!';
+      icon = <CheckCircleIcon color="success" fontSize="large" />;
+      instruction = '';
+      break;
+    }
     case StatusOption.failed: {
       title = 'Transaction execution failed.';
       icon = <ErrorIcon color="error" fontSize="large" />;
       instruction = 'Please make sure you have enough free balance and retry the transaction.';
+      break;
+    }
+    case StatusOption.denied: {
+      title = `Transaction couldn't be executed failed.`;
+      icon = <DoNotDisturbIcon color="error" fontSize="large" />;
+      instruction = `Your selected account doesn't have permission to perform this action.`;
       break;
     }
     default: {
