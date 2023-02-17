@@ -54,9 +54,7 @@ Kuuma's functionality relies on the [proxy](https://github.com/paritytech/substr
 
 
 ## Video Demo
-[Insert Video Link here]()
-
-[//]: # (TODO: Add video link)
+[https://www.loom.com/share/f71a7b50af4a4eb18c52d102dfc9cbe2](https://www.loom.com/share/f71a7b50af4a4eb18c52d102dfc9cbe2)
 
 
 ## Instructions
