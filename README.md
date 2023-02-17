@@ -87,3 +87,6 @@ Go to [http://localhost:3000/](http://localhost:3000/) to use the app
 
 Kuuma was built for [Polkadot Hackathon Global Series: Europe Edition](https://www.polkadotglobalseries.com/)
 
+
+## License
+This code is released under GPL-3.0
