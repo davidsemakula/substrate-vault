@@ -31,6 +31,8 @@ import { UserContextType } from '../../context/types';
 import { useNavigate } from 'react-router-dom';
 import useVault from '../../hooks/useVault';
 import storage from "../../services/storage";
+import {getChainByName} from "../../utils/helpers";
+import useSetUserContext from "../../hooks/useSetUserContext";
 
 const VaultSteps = Steps<Vault, UserContextType>;
 
@@ -48,10 +50,18 @@ export default function EditVault() {
   const { api, apiSupported } = useApi();
   const signer = useSigner();
   const navigate = useNavigate();
+  const { setChain } = useSetUserContext();
 
   const [data, setData] = useState<Vault | null | undefined>(vault);
   const [status, setStatus] = useState<StatusOption>(StatusOption.initiating);
   const [canRetry, setCanRetry] = useState<boolean>(false);
+
+  useMemo(() => {
+    const vaultChain = vault?.chain && getChainByName(vault.chain);
+    if(vaultChain && vaultChain?.info !== chain.info) {
+      setChain(vaultChain);
+    }
+  }, [vault, chain]);
 
   const cleanedVault = useMemo(() => {
     // Step components don't take care of network changes, so we do it here
