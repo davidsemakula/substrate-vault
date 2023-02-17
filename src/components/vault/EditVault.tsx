@@ -5,17 +5,11 @@ import SetName from './core/SetName';
 import SetPolicies from './core/SetPolicies';
 import Summary from './core/Summary';
 import Status, { StatusOption } from './core/Status';
-import {
-  Account,
-  ChainInfo,
-  ProxyAction,
-  ProxyActionType,
-  TransactionType,
-  Vault,
-} from '../../utils/types';
+import { Account, ChainInfo, ProxyAction, ProxyActionType, TransactionType, Vault } from '../../utils/types';
 import {
   getChainVault,
-  isValidEditAndImportVault, makeProxyUpdateActionsStateAware,
+  isValidEditAndImportVault,
+  makeProxyUpdateActionsStateAware,
   parseProxyActions,
 } from '../../utils/vault';
 import useChain from '../../hooks/useChain';
@@ -30,9 +24,9 @@ import { ApiPromise } from '@polkadot/api';
 import { UserContextType } from '../../context/types';
 import { useNavigate } from 'react-router-dom';
 import useVault from '../../hooks/useVault';
-import storage from "../../services/storage";
-import {getChainByName} from "../../utils/helpers";
-import useSetUserContext from "../../hooks/useSetUserContext";
+import storage from '../../services/storage';
+import { getChainByName } from '../../utils/helpers';
+import useSetUserContext from '../../hooks/useSetUserContext';
 
 const VaultSteps = Steps<Vault, UserContextType>;
 
@@ -58,7 +52,7 @@ export default function EditVault() {
 
   useMemo(() => {
     const vaultChain = vault?.chain && getChainByName(vault.chain);
-    if(vaultChain && vaultChain?.info !== chain.info) {
+    if (vaultChain && vaultChain?.info !== chain.info) {
       setChain(vaultChain);
     }
   }, [vault, chain]);
@@ -185,11 +179,11 @@ export default function EditVault() {
               .filter(Boolean)
               .includes(account.address),
         ).length > 0;
-      if(isSignerPartOfAnAnyPolicy) {
+      if (isSignerPartOfAnAnyPolicy) {
         let proxyActions: Array<ProxyAction> = parseProxyActions(data, chain);
         proxyActions = makeProxyUpdateActionsStateAware(proxyActions, vault, chain);
 
-        if(proxyActions.length > 0) {
+        if (proxyActions.length > 0) {
           createApprovalPolicy(api, vault.address, proxyActions, chain, account, signer, data);
         } else {
           setStatus(StatusOption.updated);

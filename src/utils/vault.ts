@@ -1,4 +1,4 @@
-import {createKeyMulti, encodeAddress, isAddress, sortAddresses} from '@polkadot/util-crypto';
+import { createKeyMulti, encodeAddress, isAddress, sortAddresses } from '@polkadot/util-crypto';
 
 import {
   Account,
@@ -11,7 +11,7 @@ import {
   TransactionType,
   Vault,
 } from './types';
-import {getChainAddress, getDisplayName} from './helpers';
+import { getChainAddress, getDisplayName } from './helpers';
 import _ from 'lodash';
 
 export function initVault(chain: ChainInfo, account?: Account | null, empty?: boolean): Vault {
@@ -197,7 +197,11 @@ export function makeProxyCreationActionsSignerAware(
   return creationAwareProxyActions;
 }
 
-export function makeProxyUpdateActionsStateAware(proxyActions: Array<ProxyAction>, state: Vault, chain: ChainInfo): Array<ProxyAction> {
+export function makeProxyUpdateActionsStateAware(
+  proxyActions: Array<ProxyAction>,
+  state: Vault,
+  chain: ChainInfo,
+): Array<ProxyAction> {
   let stateAwareProxyActions = [...proxyActions];
   const currentStateActions = parseProxyActions(state, chain);
 
@@ -205,11 +209,14 @@ export function makeProxyUpdateActionsStateAware(proxyActions: Array<ProxyAction
     actionsToInsert: Array<ProxyAction> = [];
 
   // Find "add" actions in current state that aren't in new actions and add remove actions for them and then remove add actions that are in both since they already exist
-  for(const action of currentStateActions) {
-    if(action.action === ProxyActionType.add) {
+  for (const action of currentStateActions) {
+    if (action.action === ProxyActionType.add) {
       // We only care about matching additions
-      const isInNewState = proxyActions.find(item => item.action === action.action && item.proxyType === action.proxyType && item.account === action.account);
-      if(isInNewState) {
+      const isInNewState = proxyActions.find(
+        (item) =>
+          item.action === action.action && item.proxyType === action.proxyType && item.account === action.account,
+      );
+      if (isInNewState) {
         // add to list of actions to remove since it was already added
         actionsToRemove.push(action);
       } else {
@@ -217,14 +224,16 @@ export function makeProxyUpdateActionsStateAware(proxyActions: Array<ProxyAction
         actionsToInsert.push({
           ...action,
           action: ProxyActionType.remove,
-        })
+        });
       }
     }
   }
 
   // Remove everything in actionsToRemove
-  stateAwareProxyActions = stateAwareProxyActions.filter(action => {
-    const isinActionsToRemove = actionsToRemove.find(item => item.action === action.action && item.proxyType === action.proxyType && item.account === action.account);
+  stateAwareProxyActions = stateAwareProxyActions.filter((action) => {
+    const isinActionsToRemove = actionsToRemove.find(
+      (item) => item.action === action.action && item.proxyType === action.proxyType && item.account === action.account,
+    );
     return !isinActionsToRemove;
   });
 
