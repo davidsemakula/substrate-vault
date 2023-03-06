@@ -1,9 +1,6 @@
 # Kuuma: Substrate Vault
 
-## Project Name
-
-Kuuma: Substrate Vault with complex hierarchical and granular transaction approval policies.
-
+The easiest way to create and manage Substrate Vaults with complex hierarchical and granular transaction approval policies.
 
 ## Project Description
 
@@ -20,49 +17,25 @@ Kuuma leverages the composability of Substrate's robust and powerful account pri
 - Account and/or key rotation and approval policy changes while preserving the same user-facing vault address.
 - Ability to prevent destructive and unrecoverable proxy related actions when using the Kuuma interface (e.g. not allowing users to remove the last any type proxy from a vault).
 
-
 To minimize the risk of potentially destructive approval policy management actions due to order of execution of approval policy management transactions, Kuuma executes all changes to approval polices as [batchAll](https://polkadot.js.org/docs/substrate/extrinsics#batchallcalls-veccall) calls which are atomically executed.
-
-## Team
-
-| Name           | Email                   | Github                                            |
-|----------------|-------------------------|---------------------------------------------------|
-| David Semakula | hello@davidsemakula.com | [davidsemakula](https://github.com/davidsemakula) |
-
-
-## Category
-
-01 Interfaces and Experiences
-
 
 ## The Problem
 
-Substrate and Polkadot provide very robust and powerful account primitives including [proxy](https://wiki.polkadot.network/docs/learn-proxies), [pure/anonymous proxy](https://wiki.polkadot.network/docs/learn-proxies#anonymous-proxy-pure-proxy), [multi-signature](https://wiki.polkadot.network/docs/learn-account-multisig) and [standard (private key)](https://wiki.polkadot.network/docs/learn-accounts) accounts
+Substrate provides very robust and powerful account primitives including [proxy](https://wiki.polkadot.network/docs/learn-proxies), [pure/anonymous proxy](https://wiki.polkadot.network/docs/learn-proxies#anonymous-proxy-pure-proxy), [multi-signature](https://wiki.polkadot.network/docs/learn-account-multisig) and [standard (private key)](https://wiki.polkadot.network/docs/learn-accounts) accounts
 which can be composed into complex and flexible high-level abstractions to model complex real-world account relationships and access control structures.
 
 However, there are very few foolproof and user-friendly UI (user interface) tools that allow non-technical users to leverage these capabilities to create and manage accounts with complex hierarchical and granular transaction approval policies for both personal and corporate use.
 Kuuma aims to change this.
 
-
-## How we use Substrate
+## Technology
 
 Kuuma's functionality relies on the [proxy](https://github.com/paritytech/substrate/tree/master/frame/proxy), [mutlisig](https://github.com/paritytech/substrate/tree/master/frame/multisig) and [utility](https://github.com/paritytech/substrate/tree/master/frame/utility) pallets which it interacts with through the [@polkadot/api](https://www.npmjs.com/package/@polkadot/api) library.
-
-
-## Technology Stack
-[TypeScript](https://www.typescriptlang.org/), [React.js](https://reactjs.org/), [polkadot{.js}](https://polkadot.js.org/)
-
-
-## Video Demo
-[https://www.loom.com/share/f71a7b50af4a4eb18c52d102dfc9cbe2](https://www.loom.com/share/f71a7b50af4a4eb18c52d102dfc9cbe2)
-
 
 ## Instructions
 
 ### For Demos and Testing
 
 - Go to [https://kuuma.davidsemakula.com](https://kuuma.davidsemakula.com)
-
 
 ### For Developers
 
@@ -80,11 +53,6 @@ yarn start
 
 Go to [http://localhost:3000/](http://localhost:3000/) to use the app
 
-
-## Miscellaneous
-
-Kuuma was built for [Polkadot Hackathon Global Series: Europe Edition](https://www.polkadotglobalseries.com/)
-
-
 ## License
+
 This code is released under GPL-3.0
